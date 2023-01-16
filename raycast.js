@@ -5,6 +5,13 @@ const MAP_NUM_COLS = 15;
 const WINDOW_WIDTH = MAP_NUM_COLS * TILE_SIZE;
 const WINDOW_HEIGHT = MAP_NUM_ROWS * TILE_SIZE;
 
+//field of view angle in radians
+const FOV_ANGLE = 60 * (Math.PI / 180);
+
+//Width of strip and number of arrays for castAllRays function.
+const WALL_STRIP_WIDTH = 30;
+const NUM_RAYS = WINDOW_WIDTH / WALL_STRIP_WIDTH; 
+
 class Map{
     constructor(){
         //zeroes are empty ones are walls
@@ -97,6 +104,61 @@ class Player{
     }
 }
 
+class Ray{
+    constructor(rayAngle){
+        //Keep the angle between 0 and 2pi with normalizeAngle
+        this.rayAngle = normalizeAngle(rayAngle);
+        //location of wall hit location and distance of ray from player to wall.
+        this.wallHitX = 0;
+        this.wallHitY = 0;
+        this.distance = 0;
+
+        //Checks of ray location.
+        this.isRayFacingDown = this.rayAngle > 0 && this.rayAngle < Math.PI;
+        this.isRayFacingUp = !this.isRayFacingDown;
+
+        this.isRayFacingRight = this.rayAngle > 1.5 * Math.PI || this.rayAngle < 0.5 * Math.PI;
+        this.isRayFacingLeft = !this.isRayFacingRight;
+    }
+
+    cast(columnId){
+        var xstep, ystep;           //deltax and deltay
+        var xintercept, yintercept; //where ray collides with wall
+
+        //HORIZONTAL RAY-GRID INTERSECTION CODE
+
+        console.log("isRayFacingRight?", this.isRayFacingRight);
+
+        //Find y coordinate of closest horiz. grid intersection, then x coordinate of horiz
+        //grid intersect. Add tile size if ray facing down
+        yintercept = Math.floor(player.y / TILE_SIZE) * TILE_SIZE;
+        yintercept += this.isRayFacingDown ? TILE_SIZE : 0;
+
+        xintercept = player.x + (yintercept - player.y) / Math.tan(this.rayAngle);
+
+        ystep = TILE_SIZE;
+        //invert if up or don't do anything.
+        ystep *= this.isRayFacingUp ? -1 : 1;
+
+        //left and x positive invert, right and x negative invert, otherwise don't do anything.
+        xstep = TILE_SIZE / Math.tan(this.rayAngle)
+        xstep *= (this.isRayFacingLeft && xstep > 0) ? -1 : 1
+        xstep *= (this.isRayFacingRight && xstep < 0) ? -1 : 1
+    }
+
+    render(){
+        stroke("rgba(255, 0, 0, 0.3)");
+        //line extends from origin to projected x and y of the ray using trig!
+        line(
+            player.x, 
+            player.y, 
+            player.x + Math.cos(this.rayAngle) * 30, 
+            player.y + Math.sin(this.rayAngle) * 30
+        );
+
+    }
+}
+
 var grid = new Map();
 var player = new Player();
 
@@ -132,6 +194,36 @@ function keyReleased(){
     }
 }
 
+function castAllRays(){
+    var columnId = 0;
+
+    //start at first ray (ANGLE - HALF OF ANGLE)
+    var rayAngle = player.rotationAngle - (FOV_ANGLE / 2);
+
+    rays = [];
+
+    //loop all columns casting the rays
+    for(var i = 0; i < NUM_RAYS; i++){
+        var ray = new Ray(rayAngle);
+        ray.cast(columnId);
+
+        //place the ray in the rays array and increment angle and column id.
+        rays.push(ray);
+        rayAngle += FOV_ANGLE / NUM_RAYS;
+        columnId++;
+    }
+}
+
+function normalizeAngle(angle){
+    //keep angle between 0 and 2pi
+    angle = angle % (2 * Math.PI)
+    //keep angle positive.
+    if(angle < 0){
+        angle = (2 * Math.PI) + angle;
+    }
+    return angle;
+}
+
 function setup(){
     //Initialize all objects
     createCanvas(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -141,6 +233,7 @@ function setup(){
 function update(){
     //Update all game objects before we render the next frame
     player.update();
+    castAllRays();
 
 }
 
@@ -148,5 +241,8 @@ function draw(){
     update();
     //render all objects frame by frame
     grid.render();
+    for(ray of rays){   //for each ray of rays.
+        ray.render();
+    }
     player.render();
 }
