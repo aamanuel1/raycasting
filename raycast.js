@@ -94,7 +94,7 @@ class Player{
         fill("red");
         circle(this.x, this.y, this.radius);
         stroke("red");
-        //Origin first then projected point from trig.
+        // Origin first then projected point from trig.
         line(
             this.x,
             this.y,
@@ -112,6 +112,7 @@ class Ray{
         this.wallHitX = 0;
         this.wallHitY = 0;
         this.distance = 0;
+        this.wasHitVertical = false;
 
         //Checks of ray location.
         this.isRayFacingDown = this.rayAngle > 0 && this.rayAngle < Math.PI;
@@ -127,7 +128,11 @@ class Ray{
 
         //HORIZONTAL RAY-GRID INTERSECTION CODE
 
-        console.log("isRayFacingRight?", this.isRayFacingRight);
+        // console.log("isRayFacingRight?", this.isRayFacingRight);
+
+        var foundHorizWallHit = false;
+        var horizWallHitX = 0;
+        var horizWallHitY = 0;
 
         //Find y coordinate of closest horiz. grid intersection, then x coordinate of horiz
         //grid intersect. Add tile size if ray facing down
@@ -144,6 +149,94 @@ class Ray{
         xstep = TILE_SIZE / Math.tan(this.rayAngle)
         xstep *= (this.isRayFacingLeft && xstep > 0) ? -1 : 1
         xstep *= (this.isRayFacingRight && xstep < 0) ? -1 : 1
+        
+        var nextHorizTouchX = xintercept;
+        var nextHorizTouchY = yintercept;
+
+        //Force the horizontal touch X to be in the next tile by one pixel.
+        if(this.isRayFacingUp){
+            nextHorizTouchY--;
+        }
+
+        //increment xstep and ystep until wall is found or outside of map.
+        while(nextHorizTouchX >= 0 && nextHorizTouchX <= WINDOW_WIDTH && nextHorizTouchY >= 0 && nextHorizTouchY <= WINDOW_HEIGHT){
+            if(grid.hasWallAt(nextHorizTouchX, nextHorizTouchY)){
+                //we found a wall hit
+                foundHorizWallHit = true;
+                horizWallHitX = nextHorizTouchX;
+                horizWallHitY = nextHorizTouchY;
+                break;
+            }
+            else{
+                //increment xstep and ystip
+                nextHorizTouchX += xstep;
+                nextHorizTouchY += ystep;
+            }
+        }
+        
+        //VERTICAL RAY-GRID INTERSECTION CODE
+
+        // console.log("isRayFacingRight?", this.isRayFacingRight);
+
+        var foundVertWallHit = false;
+        var vertWallHitX = 0;
+        var vertWallHitY = 0;
+
+        //Find x coordinate of closest vert. grid intersection, then y coordinate of vert
+        //grid intersect. Add tile size if ray facing right
+        xintercept = Math.floor(player.x / TILE_SIZE) * TILE_SIZE;
+        xintercept += this.isRayFacingLeft ? TILE_SIZE : 0;
+
+        yintercept = player.y + (xintercept - player.x) * Math.tan(this.rayAngle);
+
+        xstep = TILE_SIZE;
+        //invert if left or don't do anything.
+        xstep *= this.isRayFacingLeft ? -1 : 1;
+
+        //Up and y positive invert, down and y negative invert, otherwise don't do anything.
+        ystep = TILE_SIZE * Math.tan(this.rayAngle)
+        ystep *= (this.isRayFacingUp && ystep > 0) ? -1 : 1
+        ystep *= (this.isRayFacingDown && ystep < 0) ? -1 : 1
+        
+        var nextVertTouchX = xintercept;
+        var nextVertTouchY = yintercept;
+
+        //Force the vertical touch X to be in the next tile by one pixel.
+        if(this.isRayFacingLeft){
+            nextVertTouchX--;
+        }
+
+        //increment xstep and ystep until wall is found or outside of map.
+        while(nextVertTouchX >= 0 && nextVertTouchX <= WINDOW_WIDTH && nextVertTouchY >= 0 && nextVertTouchY <= WINDOW_HEIGHT){
+            if(grid.hasWallAt(nextVertTouchX, nextVertTouchY)){
+                //we found a wall hit
+                foundVertWallHit = true;
+                vertWallHitX = nextVertTouchX;
+                vertWallHitY = nextVertTouchY;
+                break;
+
+            }
+            else{
+                //increment xstep and ystep
+                nextVertTouchX += xstep;
+                nextVertTouchY += ystep;
+            }
+        }
+
+        //Calculate both horiz and vert distances and choose the smallest value.
+        var horizHitDistance = (foundHorizWallHit) 
+            ? distanceBetweenPoints(player.x, player.y, horizWallHitX, horizWallHitY)
+            : Number.MAX_VALUE;
+
+        var vertHitDistance = (foundVertWallHit)
+            ? distanceBetweenPoints(player.x, player.y, vertWallHitX, vertWallHitY)
+            : Number.MAX_VALUE;
+        
+        //store only the smallest of the distances
+        this.wallHitX = (horizHitDistance < vertHitDistance) ? horizWallHitX : vertWallHitX;
+        this.wallHitY = (horizHitDistance < vertHitDistance) ? horizWallHitY : vertWallHitY;
+        this.distance = (horizHitDistance < vertHitDistance) ? horizHitDistance : vertHitDistance;
+        this.wasHitVertical = (vertHitDistance < horizHitDistance);
     }
 
     render(){
@@ -152,8 +245,8 @@ class Ray{
         line(
             player.x, 
             player.y, 
-            player.x + Math.cos(this.rayAngle) * 30, 
-            player.y + Math.sin(this.rayAngle) * 30
+            this.wallHitX,
+            this.wallHitY
         );
 
     }
@@ -161,6 +254,7 @@ class Ray{
 
 var grid = new Map();
 var player = new Player();
+var rays = [];
 
 //p5js listener function
 function keyPressed(){
@@ -224,6 +318,10 @@ function normalizeAngle(angle){
     return angle;
 }
 
+function distanceBetweenPoints(x1, y1, x2, y2){
+    return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+}
+
 function setup(){
     //Initialize all objects
     createCanvas(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -245,4 +343,5 @@ function draw(){
         ray.render();
     }
     player.render();
+    // castAllRays();
 }
