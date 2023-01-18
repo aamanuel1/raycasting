@@ -44,6 +44,7 @@ class Map{
             return false;
         }
         return true;
+        // return this.grid[mapY][mapX] != 0;
     }
 
     
@@ -93,14 +94,14 @@ class Player{
         noStroke();
         fill("red");
         circle(this.x, this.y, this.radius);
-        stroke("red");
-        // Origin first then projected point from trig.
-        line(
-            this.x,
-            this.y,
-            this.x + Math.cos(this.rotationAngle) * 30,
-            this.y + Math.sin(this.rotationAngle) * 30
-        );
+        // stroke("red");
+        // // Origin first then projected point from trig.
+        // line(
+        //     this.x,
+        //     this.y,
+        //     this.x + Math.cos(this.rotationAngle) * 30,
+        //     this.y + Math.sin(this.rotationAngle) * 30
+        // );
     }
 }
 
@@ -153,14 +154,14 @@ class Ray{
         var nextHorizTouchX = xintercept;
         var nextHorizTouchY = yintercept;
 
-        //Force the horizontal touch X to be in the next tile by one pixel.
-        if(this.isRayFacingUp){
-            nextHorizTouchY--;
-        }
+        // //Force the horizontal touch X to be in the next tile by one pixel.
+        // if(this.isRayFacingUp){
+        //     nextHorizTouchY--;
+        // }
 
         //increment xstep and ystep until wall is found or outside of map.
         while(nextHorizTouchX >= 0 && nextHorizTouchX <= WINDOW_WIDTH && nextHorizTouchY >= 0 && nextHorizTouchY <= WINDOW_HEIGHT){
-            if(grid.hasWallAt(nextHorizTouchX, nextHorizTouchY)){
+            if(grid.hasWallAt(nextHorizTouchX, nextHorizTouchY - (this.isRayFacingUp ? 1 : 0))){
                 //we found a wall hit
                 foundHorizWallHit = true;
                 horizWallHitX = nextHorizTouchX;
@@ -176,8 +177,6 @@ class Ray{
         
         //VERTICAL RAY-GRID INTERSECTION CODE
 
-        // console.log("isRayFacingRight?", this.isRayFacingRight);
-
         var foundVertWallHit = false;
         var vertWallHitX = 0;
         var vertWallHitY = 0;
@@ -185,7 +184,7 @@ class Ray{
         //Find x coordinate of closest vert. grid intersection, then y coordinate of vert
         //grid intersect. Add tile size if ray facing right
         xintercept = Math.floor(player.x / TILE_SIZE) * TILE_SIZE;
-        xintercept += this.isRayFacingLeft ? TILE_SIZE : 0;
+        xintercept += this.isRayFacingRight ? TILE_SIZE : 0;
 
         yintercept = player.y + (xintercept - player.x) * Math.tan(this.rayAngle);
 
@@ -201,20 +200,19 @@ class Ray{
         var nextVertTouchX = xintercept;
         var nextVertTouchY = yintercept;
 
-        //Force the vertical touch X to be in the next tile by one pixel.
-        if(this.isRayFacingLeft){
-            nextVertTouchX--;
-        }
+        // //Force the vertical touch X to be in the next tile by one pixel.
+        // if(this.isRayFacingLeft){
+        //     nextVertTouchX--;
+        // }
 
         //increment xstep and ystep until wall is found or outside of map.
         while(nextVertTouchX >= 0 && nextVertTouchX <= WINDOW_WIDTH && nextVertTouchY >= 0 && nextVertTouchY <= WINDOW_HEIGHT){
-            if(grid.hasWallAt(nextVertTouchX, nextVertTouchY)){
+            if(grid.hasWallAt(nextVertTouchX - (this.isRayFacingLeft ? 1 : 0), nextVertTouchY)){
                 //we found a wall hit
                 foundVertWallHit = true;
                 vertWallHitX = nextVertTouchX;
                 vertWallHitY = nextVertTouchY;
                 break;
-
             }
             else{
                 //increment xstep and ystep
