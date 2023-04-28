@@ -68,8 +68,71 @@ void destroyWindow(){
 }
 
 void setup(){
-	//TODO
 	//initialize and setup game objects
+	player.x = WINDOW_WIDTH / 2;
+	player.y = WINDOW_HEIGHT / 2;
+	player.width = 5;
+	player.height = 5;
+	player.turnDirection = 0;
+	player.walkDirection = 0;
+	player.rotationAngle = PI / 2;
+	player.walkSpeed = 100;
+	player.turnSpeed = 45 * (PI / 180);
+}
+
+void movePlayer(float deltaTime){
+	player.rotationAngle += player.turnDirection * player.turnSpeed * deltaTime;
+
+	float moveStep = player.walkDirection * player.walkSpeed * deltaTime;
+	
+	float newPlayerX = player.x + cos(player.rotationAngle) * moveStep;
+	float newPlayerY = player.y + sin(player.rotationAngle) * moveStep;
+
+	//TODO: perform wall collision.
+
+	player.x = newPlayerX;
+	player.y = newPlayerY;
+	
+}
+
+void renderPlayer(){
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	SDL_Rect playerRect = {
+		player.x * MINIMAP_SCALE_FACTOR,
+		player.y * MINIMAP_SCALE_FACTOR,
+		player.width * MINIMAP_SCALE_FACTOR,
+		player.height * MINIMAP_SCALE_FACTOR
+	};
+	SDL_RenderFillRect(renderer, &playerRect);
+
+	//Draw the mid line
+	SDL_RenderDrawLine(
+		renderer, 
+		MINIMAP_SCALE_FACTOR * player.x,
+		MINIMAP_SCALE_FACTOR * player.y,
+		MINIMAP_SCALE_FACTOR + player.x + cos(player.rotationAngle) * 40,
+		MINIMAP_SCALE_FACTOR + player.y + sin(player.rotationAngle) * 40
+	);
+}
+
+void renderMap(){
+	for(int i = 0; i < MAP_NUM_ROWS; i++){
+        for (int j = 0; j < MAP_NUM_COLS; j++){
+            int tileX = j * TILE_SIZE;
+            int tileY = i * TILE_SIZE;
+            int tileColor = map[i][j] != 0 ? 255 : 0;
+
+			SDL_SetRenderDrawColor(renderer, tileColor, tileColor, tileColor, 255);
+			SDL_Rect mapTileRect = {
+				tileX * MINIMAP_SCALE_FACTOR,
+				tileY * MINIMAP_SCALE_FACTOR,
+				TILE_SIZE * MINIMAP_SCALE_FACTOR,
+				TILE_SIZE * MINIMAP_SCALE_FACTOR
+			};
+
+			SDL_RenderFillRect(renderer, &mapTileRect);
+        }
+    }
 }
 
 void processInput(){
