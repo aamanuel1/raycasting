@@ -18,6 +18,19 @@ const int map[MAP_NUM_ROWS][MAP_NUM_COLS] = {
     {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 };
 
+int mapHasWallAt(float x, float y){
+	if(x < 0 || x > WINDOW_WIDTH || y < 0 || y > WINDOW_HEIGHT){
+		return TRUE;
+	}
+	int mapX = floor(x / TILE_SIZE);
+	int mapY = floor(y / TILE_SIZE);
+
+	if(map[mapY][mapX] == 0)
+		return FALSE;
+	
+	return TRUE;
+}
+
 struct Player{
 	float x;
 	float y;
@@ -88,11 +101,11 @@ void movePlayer(float deltaTime){
 	float newPlayerX = player.x + cos(player.rotationAngle) * moveStep;
 	float newPlayerY = player.y + sin(player.rotationAngle) * moveStep;
 
-	//TODO: perform wall collision.
-
-	player.x = newPlayerX;
-	player.y = newPlayerY;
-	
+	//perform wall collision.
+	if(!mapHasWallAt(newPlayerX, newPlayerY)){
+		player.x = newPlayerX;
+		player.y = newPlayerY;
+	}
 }
 
 void renderPlayer(){
