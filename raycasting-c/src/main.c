@@ -144,22 +144,65 @@ void processInput(){
 			break;
 		}
 		case SDL_KEYDOWN:{
-		if(event.key.keysym.sym == SDLK_ESCAPE)
-			isGameRunning = FALSE;
-		break;
-		}	
+			if(event.key.keysym.sym == SDLK_ESCAPE)
+				isGameRunning = FALSE;
+			if(event.key.keysym.sym == SDLK_UP)
+				player.walkDirection = +1;
+			if(event.key.keysym.sym == SDLK_DOWN)
+				player.walkDirection = -1;
+			if(event.key.keysym.sym == SDLK_RIGHT)
+				player.turnDirection = +1;			
+			if(event.key.keysym.sym == SDLK_LEFT)
+				player.turnDirection = -1;
+			break;
+		}
+		case SDL_KEYUP:{
+			if(event.key.keysym.sym == SDLK_UP)
+				player.walkDirection = 0;
+			if(event.key.keysym.sym == SDLK_DOWN)
+				player.walkDirection = 0;
+			if(event.key.keysym.sym == SDLK_RIGHT)
+				player.turnDirection = 0;			
+			if(event.key.keysym.sym == SDLK_LEFT)
+				player.turnDirection = 0;
+			break;
+		}		
 	}
+}
+
+void update(){
+	//calculate time to wait until we reach target frame time
+	int timeToWait = (SDL_GetTicks() - ticksLastFrame);
+	
+	//waste or sleep until we reach the target frame time length. Use delay function
+	//to save on resources.
+	if(timeToWait > 0 && timeToWait <= FRAME_TIME_LENGTH){
+		SDL_Delay(timeToWait);
+	}	
+
+	//Implement deltatime
+	float deltaTime = (SDL_GetTicks() - ticksLastFrame) / 1000.0f;
+
+	ticksLastFrame = SDL_GetTicks();
+		
+	//TODO: remember to update game objects as a function of deltatime.
+	movePlayer(deltaTime);
+		
 }
 
 void render(){
 	
 	//clear the frame
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	SDL_RenderClear(renderer);	
+	SDL_RenderClear(renderer);
 	
-	//TODO:
+	//TODO:	
 	//render all game objects for the current frame
+	renderMap();
+	// renderRays();
+	renderPlayer();
 	
+
 	//swap the buffer
 	SDL_RenderPresent(renderer);
 }
@@ -171,8 +214,8 @@ int main(){
 
 	while(isGameRunning){
 		processInput();
-		//update();
-		//render();
+		update();
+		render();
 	}
 	
 	destroyWindow();
