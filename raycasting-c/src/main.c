@@ -192,14 +192,14 @@ void castRay(float rayAngle, int stripId){
 	float nextHorizTouchX = xintercept;
 	float nextHorizTouchY = yintercept;
 
-	while(nextHorizTouchX >= 0 && nextHorizTouchY <= WINDOW_WIDTH){
+	while(nextHorizTouchX >= 0 && nextHorizTouchX <= WINDOW_WIDTH && nextHorizTouchY >= 0 && nextHorizTouchY <= WINDOW_HEIGHT){
 		float xToCheck = nextHorizTouchX;
 		float yToCheck = nextHorizTouchY + (isRayFacingUp ? -1: 0);
 		if(mapHasWallAt(xToCheck, yToCheck)){
 			foundHorizWallHit = TRUE;
 			horizWallHitX = nextHorizTouchX;
 			horizWallHitY = nextHorizTouchY;
-			horizWallContent = map[(int)floor(yToCheck/TILE_SIZE)] [(int)floor(xToCheck/TILE_SIZE)];
+			horizWallContent = map[(int)floor(yToCheck/TILE_SIZE)][(int)floor(xToCheck/TILE_SIZE)];
 			break;
 		}
 		else{
@@ -224,12 +224,12 @@ void castRay(float rayAngle, int stripId){
 
 	ystep = TILE_SIZE * tan(rayAngle);
 	ystep *= (isRayFacingUp && ystep > 0) ? -1 : 1;
-	ystep *= (isRayFacingDown && ystep < 0);
+	ystep *= (isRayFacingDown && ystep < 0) ? -1 : 1;
 
 	float nextVertTouchX = xintercept;
 	float nextVertTouchY = yintercept;
 
-	while(nextVertTouchX >= 0 && nextVertTouchX > WINDOW_WIDTH){
+	while(nextVertTouchX >= 0 && nextVertTouchX <= WINDOW_WIDTH && nextVertTouchY >= 0 && nextVertTouchY <= WINDOW_HEIGHT){
 		float xToCheck = nextVertTouchX + (isRayFacingLeft ? -1 : 0);
 		float yToCheck = nextVertTouchY;
 		if(mapHasWallAt(xToCheck, yToCheck)){
@@ -239,15 +239,19 @@ void castRay(float rayAngle, int stripId){
 			vertWallContent = map[(int)floor(yToCheck/TILE_SIZE)] [(int)floor(xToCheck/TILE_SIZE)];
 			break;
 		}
+		else{
+			nextVertTouchX += xstep;
+			nextVertTouchY += ystep;
+		}
 	}
 
 	float horizHitDistance = (foundHorizWallHit) 
 	? distanceBetweenPoints(player.x, player.y, horizWallHitX, horizWallHitY) 
-	: INT_MAX;
+	: FLT_MAX;
 
 	float vertHitDistance = (foundVertWallHit)
 	? distanceBetweenPoints(player.x, player.y, vertWallHitX, vertWallHitY)
-	: INT_MAX;
+	: FLT_MAX;
 
 	if(vertHitDistance < horizHitDistance){
 		rays[stripId].distance = vertHitDistance;
@@ -259,7 +263,7 @@ void castRay(float rayAngle, int stripId){
 	else{
 		rays[stripId].distance = horizHitDistance;
 		rays[stripId].wallHitX = horizWallHitX;
-		rays[stripId].wallHitY = vertWallHitY;
+		rays[stripId].wallHitY = horizWallHitY;
 		rays[stripId].wasHitVertical = FALSE;
 		rays[stripId].wallHitContent = horizWallContent;
 	}
