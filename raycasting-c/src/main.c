@@ -62,6 +62,11 @@ SDL_Renderer* renderer = NULL;
 int isGameRunning = FALSE;
 int ticksLastFrame = 0;
 
+Uint32* colourBuffer = NULL;
+
+SDL_Texture* colourBufferTexture;
+
+
 int initializeWindow(){
 	if(SDL_Init(SDL_INIT_EVERYTHING) != 0){
 		fprintf(stderr, "Error initializing SDL.\n");
@@ -105,6 +110,18 @@ void setup(){
 	player.rotationAngle = PI / 2;
 	player.walkSpeed = 100;
 	player.turnSpeed = 45 * (PI / 180);
+
+	//Allocate the colour buffer in memory
+	colourBuffer = (Uint32*) malloc(sizeof(Uint32) * (Uint32)WINDOW_WIDTH * (Uint32)WINDOW_HEIGHT);
+
+	//Create SDL_Texture to display the colour buffer.
+	colourBufferTexture = SDL_CreateTexture(
+		renderer,
+		SDL_PIXELFORMAT_ARGB8888,
+		SDL_TEXTUREACCESS_STREAMING,
+		WINDOW_WIDTH,
+		WINDOW_HEIGHT
+	);
 }
 
 void movePlayer(float deltaTime){
@@ -137,8 +154,8 @@ void renderPlayer(){
 		renderer, 
 		MINIMAP_SCALE_FACTOR * player.x,
 		MINIMAP_SCALE_FACTOR * player.y,
-		MINIMAP_SCALE_FACTOR + player.x + cos(player.rotationAngle) * 40,
-		MINIMAP_SCALE_FACTOR + player.y + sin(player.rotationAngle) * 40
+		MINIMAP_SCALE_FACTOR * player.x + cos(player.rotationAngle) * 40,
+		MINIMAP_SCALE_FACTOR * player.y + sin(player.rotationAngle) * 40
 	);
 }
 
@@ -247,7 +264,7 @@ void castRay(float rayAngle, int stripId){
 
 	float horizHitDistance = (foundHorizWallHit) 
 	? distanceBetweenPoints(player.x, player.y, horizWallHitX, horizWallHitY) 
-	: FLT_MAX;
+	: FLT_MAX; 
 
 	float vertHitDistance = (foundVertWallHit)
 	? distanceBetweenPoints(player.x, player.y, vertWallHitX, vertWallHitY)
@@ -373,14 +390,39 @@ void update(){
 		
 }
 
+void clearColourBuffer(Uint32 colour){
+	for(int x = 0; x < WINDOW_WIDTH; x++){
+		for(int y = 0; y < WINDOW_HEIGHT; y++){
+			if(x == y)
+				colourBuffer[(WINDOW_WIDTH * y) + x] = colour;
+			else
+				colourBuffer[(WINDOW_WIDTH * y) + x] = 0xFFFF0000;
+		}
+	}
+}
+
+void renderColourBuffer(){
+	SDL_UpdateTexture(colourBufferTexture, 
+				NULL, 
+				colourBuffer, 
+				(int) ((Uint32)WINDOW_WIDTH * sizeof(Uint32))
+				); 
+
+	SDL_RenderCopy(renderer, colourBufferTexture, NULL, NULL);
+}
+
 void render(){
 	
 	//clear the frame
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
+
+	renderColourBuffer();
 	
-	//TODO:	
-	//render all game objects for the current frame
+	//Clear the colour buffer
+	clearColourBuffer(0xFF00EE30);
+
+	//Display the minimap
 	renderMap();
 	renderRays();
 	renderPlayer();
