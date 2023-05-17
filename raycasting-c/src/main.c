@@ -94,6 +94,9 @@ int initializeWindow(){
 }
 
 void destroyWindow(){
+	free(colourBuffer); //Remember to deallocate the buffer.
+	//Deallocate Texture using DestroyTexture since a pointer is returned. 
+	SDL_DestroyTexture(colourBufferTexture); 
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(window);
 	SDL_Quit();
@@ -393,10 +396,7 @@ void update(){
 void clearColourBuffer(Uint32 colour){
 	for(int x = 0; x < WINDOW_WIDTH; x++){
 		for(int y = 0; y < WINDOW_HEIGHT; y++){
-			if(x == y)
-				colourBuffer[(WINDOW_WIDTH * y) + x] = colour;
-			else
-				colourBuffer[(WINDOW_WIDTH * y) + x] = 0xFFFF0000;
+			colourBuffer[(WINDOW_WIDTH * y) + x] = colour;
 		}
 	}
 }
@@ -411,16 +411,49 @@ void renderColourBuffer(){
 	SDL_RenderCopy(renderer, colourBufferTexture, NULL, NULL);
 }
 
+void generate3DProjection(){
+	for(int i = 0; i < NUM_RAYS; i++){
+		float perpDistance = rays[i].distance * cos(rays[i].rayAngle - player.rotationAngle);
+		float distanceProjPlane = (WINDOW_WIDTH / 2) / tan(FOV_ANGLE / 2);
+		float projectedWallHeight = (TILE_SIZE / perpDistance) * distanceProjPlane;
+		
+		int wallStripHeight = (int) projectedWallHeight;
+
+		int wallTopPixel = (WINDOW_HEIGHT / 2) - (wallStripHeight / 2);
+		wallTopPixel = wallTopPixel < 0 ?  0 : wallTopPixel;
+
+		int wallBottomPixel = (WINDOW_HEIGHT / 2) + (wallStripHeight / 2);
+		wallBottomPixel = wallBottomPixel > WINDOW_HEIGHT ? WINDOW_HEIGHT : wallBottomPixel;
+
+		//render ceiling
+		for(int y = 0; y < wallTopPixel; y++){
+			colourBuffer[(WINDOW_WIDTH * y) + i] = 0xFF000000;
+		}
+
+		//render the wall from wallTopPixel to wallBottomPixel
+		for(int y = wallTopPixel; y < wallBottomPixel; y++){
+			colourBuffer[(WINDOW_WIDTH * y) + i] = rays[i].wasHitVertical ? 0xFFFFFFFF: 0xFFCCCCCC;  
+		}
+
+		//Render floor
+		for(int y = wallBottomPixel; y < WINDOW_HEIGHT; y++){
+			colourBuffer[(WINDOW_WIDTH * y) + i] = 0xFF5A5A5A;
+		}
+	}
+}
+
 void render(){
 	
 	//clear the frame
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 
+	generate3DProjection();
+
 	renderColourBuffer();
 	
 	//Clear the colour buffer
-	clearColourBuffer(0xFF00EE30);
+	clearColourBuffer(0xFF000000);
 
 	//Display the minimap
 	renderMap();
