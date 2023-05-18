@@ -430,10 +430,10 @@ void generate3DProjection(){
 		int wallStripHeight = (int) projectedWallHeight;
 
 		int wallTopPixel = (WINDOW_HEIGHT / 2) - (wallStripHeight / 2);
-		// wallTopPixel = wallTopPixel < 0 ?  0 : wallTopPixel;
+		wallTopPixel = wallTopPixel < 0 ?  0 : wallTopPixel; //we have to clamp to 0 or we'll get segfault.
 
 		int wallBottomPixel = (WINDOW_HEIGHT / 2) + (wallStripHeight / 2);
-		// wallBottomPixel = wallBottomPixel > WINDOW_HEIGHT ? WINDOW_HEIGHT : wallBottomPixel;
+		wallBottomPixel = wallBottomPixel > WINDOW_HEIGHT ? WINDOW_HEIGHT : wallBottomPixel;
 
 		//render ceiling
 		for(int y = 0; y < wallTopPixel; y++){
