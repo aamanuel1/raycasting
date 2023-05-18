@@ -66,6 +66,7 @@ Uint32* colourBuffer = NULL;
 
 SDL_Texture* colourBufferTexture;
 
+Uint32* wallTexture = NULL;
 
 int initializeWindow(){
 	if(SDL_Init(SDL_INIT_EVERYTHING) != 0){
@@ -125,6 +126,15 @@ void setup(){
 		WINDOW_WIDTH,
 		WINDOW_HEIGHT
 	);
+
+	wallTexture = (Uint32*) malloc(sizeof(Uint32) * ((Uint32) TEXTURE_WIDTH * (Uint32) TEXTURE_HEIGHT));
+	
+	//Create a texture with a pattern of blue and black lines.
+	for(int x = 0; x < TEXTURE_WIDTH; x++){
+		for(int y = 0; y < TEXTURE_HEIGHT; y++){
+			wallTexture[(TEXTURE_WIDTH * y) + x] = (x % 8 && y % 8) ? 0xFF0000FF : 0xFF000000;
+		}
+	}
 }
 
 void movePlayer(float deltaTime){
@@ -420,19 +430,37 @@ void generate3DProjection(){
 		int wallStripHeight = (int) projectedWallHeight;
 
 		int wallTopPixel = (WINDOW_HEIGHT / 2) - (wallStripHeight / 2);
-		wallTopPixel = wallTopPixel < 0 ?  0 : wallTopPixel;
+		// wallTopPixel = wallTopPixel < 0 ?  0 : wallTopPixel;
 
 		int wallBottomPixel = (WINDOW_HEIGHT / 2) + (wallStripHeight / 2);
-		wallBottomPixel = wallBottomPixel > WINDOW_HEIGHT ? WINDOW_HEIGHT : wallBottomPixel;
+		// wallBottomPixel = wallBottomPixel > WINDOW_HEIGHT ? WINDOW_HEIGHT : wallBottomPixel;
 
 		//render ceiling
 		for(int y = 0; y < wallTopPixel; y++){
-			colourBuffer[(WINDOW_WIDTH * y) + i] = 0xFF000000;
+			colourBuffer[(WINDOW_WIDTH * y) + i] = 0xFF333333;
+		}
+
+		int textureOffsetX;
+		//calculate textureOffsetX
+		if(rays[i].wasHitVertical){
+			//perform offset for vert hit
+			textureOffsetX = (int) rays[i].wallHitY % TILE_SIZE;
+		}
+		else{
+			//perform offset for horiz hit.
+			textureOffsetX = (int) rays[i].wallHitX % TILE_SIZE;
 		}
 
 		//render the wall from wallTopPixel to wallBottomPixel
 		for(int y = wallTopPixel; y < wallBottomPixel; y++){
-			colourBuffer[(WINDOW_WIDTH * y) + i] = rays[i].wasHitVertical ? 0xFFFFFFFF: 0xFFCCCCCC;  
+			
+			//calculate textureOffsetY (y offset from top * height factor)
+			int distanceFromTop = y + (wallStripHeight / 2) - (WINDOW_HEIGHT / 2);
+			int textureOffsetY = distanceFromTop * ((float)TEXTURE_HEIGHT / wallStripHeight);
+
+			//Set the colours of the pixels based on the wallTexture in memory.
+			Uint32 texelColour = wallTexture[(TEXTURE_WIDTH * textureOffsetY) + textureOffsetX];
+			colourBuffer[(WINDOW_WIDTH * y) + i] = texelColour;
 		}
 
 		//Render floor
