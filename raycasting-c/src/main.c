@@ -98,6 +98,8 @@ int initializeWindow(){
 }
 
 void destroyWindow(){
+	//free all textures from upng.
+	freeWallTextures();
 	free(colourBuffer); //Remember to deallocate the buffer.
 	//Deallocate Texture using DestroyTexture since a pointer is returned. 
 	SDL_DestroyTexture(colourBufferTexture); 
@@ -124,22 +126,15 @@ void setup(){
 	//Create SDL_Texture to display the colour buffer.
 	colourBufferTexture = SDL_CreateTexture(
 		renderer,
-		SDL_PIXELFORMAT_ARGB8888,
+		SDL_PIXELFORMAT_RGBA32,
 		SDL_TEXTUREACCESS_STREAMING,
 		WINDOW_WIDTH,
 		WINDOW_HEIGHT
 	);
 
-	//load textures from textures.h
-	textures[0] = (uint32_t*) REDBRICK_TEXTURE;
-	textures[1] = (uint32_t*) PURPLESTONE_TEXTURE;
-	textures[2] = (uint32_t*) MOSSYSTONE_TEXTURE;
-	textures[3] = (uint32_t*) GRAYSTONE_TEXTURE;
-	textures[4] = (uint32_t*) COLORSTONE_TEXTURE;
-	textures[5] = (uint32_t*) BLUESTONE_TEXTURE;
-	textures[6] = (uint32_t*) WOOD_TEXTURE;
-	textures[7] = (uint32_t*) EAGLE_TEXTURE;
-
+	//see textures.h and textures.c
+	//asks uPNG to decode all PNG files and loads wallTextures array
+	loadWallTextures();
 }
 
 void movePlayer(float deltaTime){
@@ -467,7 +462,7 @@ void generate3DProjection(){
 			int textureOffsetY = distanceFromTop * ((float)TEXTURE_HEIGHT / wallStripHeight);
 
 			//Set the colours of the pixels based on the wallTexture in memory.
-			uint32_t texelColour = textures[texNum][(TEXTURE_WIDTH * textureOffsetY) + textureOffsetX];
+			uint32_t texelColour = wallTextures[texNum].texture_buffer[(TEXTURE_WIDTH * textureOffsetY) + textureOffsetX];
 			colourBuffer[(WINDOW_WIDTH * y) + i] = texelColour;
 		}
 
