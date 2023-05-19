@@ -308,8 +308,9 @@ void castAllRays(){
 	//Start first ray subtracting half of FOV
 	float rayAngle = player.rotationAngle - (FOV_ANGLE / 2);
 
-	for(int stripId = 0; stripId < NUM_RAYS; stripId++){
-		castRay(rayAngle, stripId);
+	for(int col = 0; col < NUM_RAYS; col++){
+		float rayAngle = player.rotationAngle + atan((col - NUM_RAYS / 2) / DIST_PROJ_PLANE);
+		castRay(rayAngle, col);
 		rayAngle += FOV_ANGLE / NUM_RAYS;
 	}
 }
@@ -424,8 +425,7 @@ void renderColourBuffer(){
 void generate3DProjection(){
 	for(int i = 0; i < NUM_RAYS; i++){
 		float perpDistance = rays[i].distance * cos(rays[i].rayAngle - player.rotationAngle);
-		float distanceProjPlane = (WINDOW_WIDTH / 2) / tan(FOV_ANGLE / 2);
-		float projectedWallHeight = (TILE_SIZE / perpDistance) * distanceProjPlane;
+		float projectedWallHeight = (TILE_SIZE / perpDistance) * DIST_PROJ_PLANE;
 		
 		int wallStripHeight = (int) projectedWallHeight;
 
@@ -454,15 +454,18 @@ void generate3DProjection(){
 		//get correct texture id number from the map content
 		int texNum = rays[i].wallHitContent - 1;
 
+		int texture_width = wallTextures[texNum].width;
+		int texture_height = wallTextures[texNum].height;
+
 		//render the wall from wallTopPixel to wallBottomPixel
 		for(int y = wallTopPixel; y < wallBottomPixel; y++){
 			
 			//calculate textureOffsetY (y offset from top * height factor)
 			int distanceFromTop = y + (wallStripHeight / 2) - (WINDOW_HEIGHT / 2);
-			int textureOffsetY = distanceFromTop * ((float)TEXTURE_HEIGHT / wallStripHeight);
+			int textureOffsetY = distanceFromTop * ((float)texture_height/ wallStripHeight);
 
 			//Set the colours of the pixels based on the wallTexture in memory.
-			uint32_t texelColour = wallTextures[texNum].texture_buffer[(TEXTURE_WIDTH * textureOffsetY) + textureOffsetX];
+			uint32_t texelColour = wallTextures[texNum].texture_buffer[(texture_width * textureOffsetY) + textureOffsetX];
 			colourBuffer[(WINDOW_WIDTH * y) + i] = texelColour;
 		}
 
