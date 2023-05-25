@@ -79,3 +79,11 @@ void renderColourBuffer(){
 void drawPixel(int x, int y, uint32_t colour){
     colourBuffer[(WINDOW_WIDTH * y) + x] = colour;
 }
+
+void drawRect(int x, int y, int width, int height, uint32_t colour){
+	for(int i = x; i <= (x + width); i++){
+		for(int j = y; j <= (y + height); j++){
+			drawPixel(i, j, colour);
+		}
+	}
+}

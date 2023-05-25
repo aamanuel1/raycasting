@@ -6,36 +6,7 @@
 #include "defs.h"
 #include "textures.h"
 #include "graphics.h"
-
-const int map[MAP_NUM_ROWS][MAP_NUM_COLS] = {
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ,1, 1, 1, 1, 1, 1, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 2, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 1},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 5},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 5},
-    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 5},
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 5, 5, 5, 5}
-};
-
-
-bool mapHasWallAt(float x, float y){
-	if(x < 0 || x >=  MAP_NUM_COLS * TILE_SIZE || y < 0 || y >= MAP_NUM_ROWS * TILE_SIZE){
-		return true;
-	}
-	int mapX = floor(x / TILE_SIZE);
-	int mapY = floor(y / TILE_SIZE);
-
-	if(map[mapY][mapX] == 0)
-		return false;
-	
-	return true;
-}
+#include "map.h"
 
 struct Player{
 	float x;
@@ -164,14 +135,15 @@ void castRay(float rayAngle, int stripId){
 	float nextHorizTouchX = xintercept;
 	float nextHorizTouchY = yintercept;
 
-	while(nextHorizTouchX >= 0 && nextHorizTouchX <= MAP_NUM_COLS * TILE_SIZE && nextHorizTouchY >= 0 && nextHorizTouchY <= MAP_NUM_ROWS * TILE_SIZE){
+	while(isInsideMap(nextHorizTouchX, nextHorizTouchY)){
+	// while(nextHorizTouchX >= 0 && nextHorizTouchX <= MAP_NUM_COLS * TILE_SIZE && nextHorizTouchY >= 0 && nextHorizTouchY <= MAP_NUM_ROWS * TILE_SIZE){
 		float xToCheck = nextHorizTouchX;
 		float yToCheck = nextHorizTouchY + (isRayFacingUp ? -1: 0);
 		if(mapHasWallAt(xToCheck, yToCheck)){
 			foundHorizWallHit = true;
 			horizWallHitX = nextHorizTouchX;
 			horizWallHitY = nextHorizTouchY;
-			horizWallContent = map[(int)floor(yToCheck/TILE_SIZE)][(int)floor(xToCheck/TILE_SIZE)];
+			horizWallContent = getMapAt((int)floor(yToCheck/TILE_SIZE), (int)floor(xToCheck/TILE_SIZE));
 			break;
 		}
 		else{
@@ -201,14 +173,15 @@ void castRay(float rayAngle, int stripId){
 	float nextVertTouchX = xintercept;
 	float nextVertTouchY = yintercept;
 
-	while(nextVertTouchX >= 0 && nextVertTouchX <= MAP_NUM_COLS * TILE_SIZE && nextVertTouchY >= 0 && nextVertTouchY <= MAP_NUM_ROWS * TILE_SIZE){
+	while (isInsideMap(nextVertTouchX, nextVertTouchY)){
+	// while(nextVertTouchX >= 0 && nextVertTouchX <= MAP_NUM_COLS * TILE_SIZE && nextVertTouchY >= 0 && nextVertTouchY <= MAP_NUM_ROWS * TILE_SIZE){
 		float xToCheck = nextVertTouchX + (isRayFacingLeft ? -1 : 0);
 		float yToCheck = nextVertTouchY;
 		if(mapHasWallAt(xToCheck, yToCheck)){
 			foundVertWallHit = true;
 			vertWallHitX = nextVertTouchX;
 			vertWallHitY = nextVertTouchY;
-			vertWallContent = map[(int)floor(yToCheck/TILE_SIZE)] [(int)floor(xToCheck/TILE_SIZE)];
+			vertWallContent = getMapAt((int)floor(yToCheck/TILE_SIZE), (int)floor(xToCheck/TILE_SIZE));
 			break;
 		}
 		else{
@@ -254,25 +227,7 @@ void castAllRays(){
 	}
 }
 
-void renderMap(){
-	// for(int i = 0; i < MAP_NUM_ROWS; i++){
-    //     for (int j = 0; j < MAP_NUM_COLS; j++){
-    //         int tileX = j * TILE_SIZE;
-    //         int tileY = i * TILE_SIZE;
-    //         int tileColor = map[i][j] != 0 ? 255 : 0;
 
-	// 		SDL_SetRenderDrawColor(renderer, tileColor, tileColor, tileColor, 255);
-	// 		SDL_Rect mapTileRect = {
-	// 			tileX * MINIMAP_SCALE_FACTOR,
-	// 			tileY * MINIMAP_SCALE_FACTOR,
-	// 			TILE_SIZE * MINIMAP_SCALE_FACTOR,
-	// 			TILE_SIZE * MINIMAP_SCALE_FACTOR
-	// 		};
-
-	// 		SDL_RenderFillRect(renderer, &mapTileRect);
-    //     }
-    // }
-}
 
 void renderRays(){
 	// SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
@@ -404,7 +359,7 @@ void render(){
 	renderWallProjection();
 
 	//Display the minimap
-	// renderMap();
+	renderMap();
 	// renderRays();
 	// renderPlayer();	
 	
@@ -431,3 +386,4 @@ int main(){
 
 	return 0;
 }
+ 
