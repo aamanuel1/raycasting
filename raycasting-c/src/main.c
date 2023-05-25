@@ -138,8 +138,8 @@ void render(){
 
 	//Display the minimap
 	renderMap();
-	// renderRays();
-	// renderPlayer();	
+	renderRays();
+	renderPlayer();	
 	
 	renderColourBuffer();
 }

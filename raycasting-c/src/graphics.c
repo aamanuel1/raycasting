@@ -87,3 +87,29 @@ void drawRect(int x, int y, int width, int height, uint32_t colour){
 		}
 	}
 }
+
+void drawLine(int x0, int y0, int x1, int y1, uint32_t colour){
+
+	//Uses DDA algorithm
+	//get delta x and delta y and the side length (longest side).
+	int deltaX = x1 - x0;
+	int deltaY = y1 - y0;
+
+	float sideLength = abs(deltaX) >= abs(deltaY) ? abs(deltaX) : abs(deltaY);
+
+	//find out how much we should increment in both x and y each step
+	float xInc = deltaX / (float) sideLength;
+	float yInc = deltaY / (float) sideLength;  
+
+	//set current x and current y
+	float currentX = x0;
+	float currentY = y0;
+
+	//draw the rasterized line.
+	for(int i = 0; i < sideLength; i++){
+		drawPixel(round(currentX), round(currentY), colour);
+		currentX += xInc;
+		currentY += yInc;
+	}
+
+}
