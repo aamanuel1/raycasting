@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include "defs.h"
 #include "graphics.h"
+#include "map.h"
 
 #define MAP_NUM_ROWS 13
 #define MAP_NUM_COLS 20
