@@ -2,7 +2,7 @@
 
 static SDL_Window* window = NULL;
 static SDL_Renderer* renderer = NULL;
-uint32_t* colourBuffer = NULL;
+colour_t* colourBuffer = NULL;
 SDL_Texture* colourBufferTexture;
 
 bool initializeWindow(){
@@ -35,7 +35,7 @@ bool initializeWindow(){
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND); //how to blend texture
 	
     //Allocate the colour buffer in memory
-	colourBuffer = (uint32_t*) malloc(sizeof(uint32_t) * (uint32_t)WINDOW_WIDTH * (uint32_t)WINDOW_HEIGHT);
+	colourBuffer = (colour_t*) malloc(sizeof(colour_t) * (colour_t)WINDOW_WIDTH * (colour_t)WINDOW_HEIGHT);
 
 	//Create SDL_Texture to display the colour buffer.
 	colourBufferTexture = SDL_CreateTexture(
@@ -57,7 +57,7 @@ void destroyWindow(){
 	SDL_Quit();
 }
 
-void clearColourBuffer(uint32_t colour){
+void clearColourBuffer(colour_t colour){
 	for(int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT; i++){
 		colourBuffer[i] = colour;
 	}
@@ -67,7 +67,7 @@ void renderColourBuffer(){
 	SDL_UpdateTexture(colourBufferTexture, 
 				NULL, 
 				colourBuffer, 
-				(int) ((uint32_t)WINDOW_WIDTH * sizeof(uint32_t))
+				(int) ((colour_t)WINDOW_WIDTH * sizeof(colour_t))
 				); 
 
 	SDL_RenderCopy(renderer, colourBufferTexture, NULL, NULL);
@@ -76,11 +76,11 @@ void renderColourBuffer(){
 	SDL_RenderPresent(renderer);
 }
 
-void drawPixel(int x, int y, uint32_t colour){
+void drawPixel(int x, int y, colour_t colour){
     colourBuffer[(WINDOW_WIDTH * y) + x] = colour;
 }
 
-void drawRect(int x, int y, int width, int height, uint32_t colour){
+void drawRect(int x, int y, int width, int height, colour_t colour){
 	for(int i = x; i <= (x + width); i++){
 		for(int j = y; j <= (y + height); j++){
 			drawPixel(i, j, colour);
@@ -88,7 +88,7 @@ void drawRect(int x, int y, int width, int height, uint32_t colour){
 	}
 }
 
-void drawLine(int x0, int y0, int x1, int y1, uint32_t colour){
+void drawLine(int x0, int y0, int x1, int y1, colour_t colour){
 
 	//Uses DDA algorithm
 	//get delta x and delta y and the side length (longest side).
